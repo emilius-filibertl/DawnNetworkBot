@@ -20,7 +20,7 @@ const keepAlive = async (email, appid, token) => {
     username: `${email}`,
     extensionid: "fpdkjdnhkakefebpekbdhillbhonfjjp",
     numberoftabs: 0,
-    _v: "1.1.1",
+    _v: "1.1.2",
   };
 
   const headers = {
