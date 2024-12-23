@@ -1,5 +1,6 @@
 import axios from "axios";
 import chalk from "chalk";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
 import { readProxy } from "./readConfig.js";
 
@@ -32,8 +33,6 @@ const convertTime = async (time) => {
 };
 
 const nodeInfo = async (appid, token) => {
-  const URL = `https://www.aeropres.in/api/atom/v1/userreferral/getpoint?appid=${appid}`;
-
   const headers = {
     authorization: `Berear ${token}`,
     "content-type": "application/json",
@@ -43,30 +42,29 @@ const nodeInfo = async (appid, token) => {
 
   const { username, password, hostname, port } = await readProxy();
 
+  const proxy = `http://${username}:${password}@${hostname}:${port}`;
+
+  const proxyAgent = new HttpsProxyAgent(proxy);
+
   const maxRetries = 5;
   let retryCount = 0;
 
   while (retryCount < maxRetries) {
     try {
-      const response = await axios.get(URL, {
-        headers: headers,
-        proxy: {
-          protocol: "http",
-          host: hostname,
-          port: port,
-          auth: {
-            username,
-            password,
-          },
-        },
-      });
+      const response = await axios.get(
+        `https://www.aeropres.in/api/atom/v1/userreferral/getpoint?appid=${appid}`,
+        {
+          headers: headers,
+          httpsAgent: proxyAgent,
+        }
+      );
 
       const { status, data } = response;
 
       if (status === 200) {
-        const { rewardPoint } = response.data.data;
+        const { rewardPoint } = data.data;
         const { points, active_status, lastKeepAlive } = rewardPoint;
-        const { servername } = response.data;
+        const { servername } = data;
         const time = await convertTime(lastKeepAlive);
 
         console.log(`Points: ${points}`);

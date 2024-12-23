@@ -1,5 +1,6 @@
 import axios from "axios";
 import chalk from "chalk";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
 import { readProxy } from "./readConfig.js";
 
@@ -15,8 +16,6 @@ const retry = async (retryCount) => {
 };
 
 const keepAlive = async (email, appid, token) => {
-  const URL = `https://www.aeropres.in/chromeapi/dawn/v1/userreward/keepalive?appid=${appid}`;
-
   const payload = {
     username: `${email}`,
     extensionid: "fpdkjdnhkakefebpekbdhillbhonfjjp",
@@ -36,23 +35,23 @@ const keepAlive = async (email, appid, token) => {
 
   const { username, password, hostname, port } = await readProxy();
 
+  const proxy = `http://${username}:${password}@${hostname}:${port}`;
+
+  const proxyAgent = new HttpsProxyAgent(proxy);
+
   const maxRetries = 5;
   let retryCount = 0;
 
   while (retryCount < maxRetries) {
     try {
-      const response = await axios.post(URL, payload, {
-        headers: headers,
-        proxy: {
-          protocol: "http",
-          host: hostname,
-          port: port,
-          auth: {
-            username,
-            password,
-          },
-        },
-      });
+      const response = await axios.post(
+        `https://www.aeropres.in/chromeapi/dawn/v1/userreward/keepalive?appid=${appid}`,
+        payload,
+        {
+          headers: headers,
+          httpsAgent: proxyAgent,
+        }
+      );
 
       const { status, data } = response;
 
