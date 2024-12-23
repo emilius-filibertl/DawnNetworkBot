@@ -1,16 +1,17 @@
 import axios from "axios";
 import chalk from "chalk";
+
 import { readProxy } from "./readConfig.js";
 
 const { red } = chalk;
 
-const delay = () => new Promise((resolve) => setTimeout(resolve, 2500));
-
-const logRetry = async (retryCount) => {
+const retry = async (retryCount) => {
   console.log(
-    chalk.red(`Wait 2.5 seconds before retrying... (Retry #${retryCount})\n`)
+    red(`Wait 2.5 seconds before retrying... (Retry #${retryCount})\n`)
   );
-  await delay();
+
+  // Delay 2.5 second
+  await new Promise((resolve) => setTimeout(resolve, 2500));
 };
 
 const convertTime = async (time) => {
@@ -76,10 +77,10 @@ const nodeInfo = async (appid, token) => {
       } else {
         // Error response 2xx
         console.log(red(`Error encountered during nodeInfo:`));
-        console.log(red(`Error status: ${status}`));
-        console.log(red(`Error message: ${data?.message || "Unknown error"}`));
+        console.log(red(`Status: ${status}`));
+        console.log(red(`Message: ${data?.message || "Unknown error"}`));
 
-        await logRetry(++retryCount);
+        await retry(++retryCount);
       }
     } catch (error) {
       // Error response 4xx and 5xx etc
@@ -95,18 +96,18 @@ const nodeInfo = async (appid, token) => {
           return;
         }
 
-        console.log(red(`Error status: ${status}`));
-        console.log(red(`Error message: ${data?.message || "Unknown error"}`));
+        console.log(red(`Status: ${status}`));
+        console.log(red(`Message: ${data?.message || "Unknown error"}`));
       } else {
         // Network or unknown error
         console.log(red(`Network or unknown error: ${error.message}`));
       }
 
-      await logRetry(++retryCount);
+      await retry(++retryCount);
     }
   }
 
-  console.log(chalk.red(`Max retries reached. Giving up.\n`));
+  console.log(red(`Max retries reached. Giving up :(\n`));
 };
 
 export { nodeInfo };
